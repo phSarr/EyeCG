@@ -3,6 +3,7 @@ import 'package:eyecg/presentation/screens/file_picker.dart';
 import 'package:eyecg/presentation/widgets/consts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:open_settings/open_settings.dart';
 import 'package:scroll_app_bar/scroll_app_bar.dart';
 
 
@@ -23,25 +24,7 @@ class _dashboardState extends State<dashboard> {
         elevation: 0,
         leading: GestureDetector(
           onTap: () {
-            // TODO replace with user user info screen including a logout option and a confirmation popup
             Navigator.of(context).pushNamed(registerScreen, arguments: 'Edit your Info');
-            /*BlocProvider<PhoneAuthCubit>(
-              create: (context) => phoneAuthCubit,
-              child: ElevatedButton(
-                onPressed: () async {
-                  await phoneAuthCubit.logOut();
-                  Navigator.of(context).pushReplacementNamed(loginScreen);
-                },
-                style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(110, 50),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6))),
-                child: const Text(
-                  'Log out',
-                  style: TextStyle(fontSize: 16),
-                ),
-              ),
-            );*/
           },
           child: const Icon(
             Icons.account_circle_outlined,
@@ -68,7 +51,7 @@ class _dashboardState extends State<dashboard> {
       body: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+          children: [ //TODO condition to either display error page or visualization page depends on Bluetooth device name
             const SizedBox(height: 160),
             Image.asset('assets/images/bluetooth.png', scale: 4),
             const SizedBox(height: 10),
@@ -82,9 +65,10 @@ class _dashboardState extends State<dashboard> {
               ),
             ),
             const SizedBox(height: 20),
-            //TODO turn on/connect to bluetooth device widget
             ElevatedButton(
-              onPressed: () => {},
+              onPressed: () => {
+              OpenSettings.openBluetoothSetting()
+              },
               child: Text('Connect'),
             ),
           ],

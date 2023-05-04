@@ -13,28 +13,45 @@ class register extends StatefulWidget {
   State<register> createState() => _registerState();
 }
 
-final RegExp nameRegExp = RegExp("([a-zA-Z0-9_\\s]+)");
-final RegExp emailRegExp = RegExp(
-    "/^[a-zA-Z0-9.!#\$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\\\.[a-zA-Z0-9-]+)*\$/");
+final RegExp nameRegExp = RegExp('/\b([A-Z]{1}[a-z]{1,30}[- ]{0,1}|[A-Z]{1}[- \']{1}[A-Z]{0,1}[a-z]{1,30}[- ]{0,1}|[a-z]{1,2}[ -\']{1}[A-Z]{1}[a-z]{1,30}){2,5}/');
+
+
 PhoneAuthCubit phoneAuthCubit = PhoneAuthCubit();
+
+//List<TextEditingController> textControllerList = [];
 TextEditingController usernameController = TextEditingController();
 TextEditingController emailController = TextEditingController();
 TextEditingController phoneNumberController = TextEditingController();
+TextEditingController otherDiseasesController = TextEditingController();
+TextEditingController ageController = TextEditingController();
+TextEditingController weightController = TextEditingController();
+TextEditingController heightController = TextEditingController();
+
+
 List emergencyNumbers = [];
-List<TextEditingController> textControllerList = [];
-final GlobalKey<FormState> _regFormKey = GlobalKey();
-late SharedPreferences _prefs =
-    SharedPreferences.getInstance() as SharedPreferences;
 const List<String> genderOptions = ['Male', 'Female'];
 
-saveData(String name) {
+final GlobalKey<FormBuilderState> _regFormKey = GlobalKey();
+
+
+_loadDefaults() async{
+  SharedPreferences _prefs = await SharedPreferences.getInstance() as SharedPreferences;
+  String defualt_name = _prefs.getString('name') ?? 'default name' ;
+}
+
+_saveData(String name) async{ //TODO implement function
+  SharedPreferences _prefs = await SharedPreferences.getInstance() as SharedPreferences;
   _prefs.setString("username", name);
+
 }
 
 class _registerState extends State<register> {
 
+
   @override
-  void initState() {}
+  void initState() {
+
+  }
 
   Widget build(BuildContext context) {
 
@@ -46,14 +63,14 @@ class _registerState extends State<register> {
         onChanged: () {
           _regFormKey.currentState!.save();
         },
-        autovalidateMode: AutovalidateMode.disabled,
-        initialValue: const {
+        autovalidateMode: AutovalidateMode.always,
+        initialValue: const { //TODO change to shared prefs values if exists
           'name': '',
           'number' : '',
           'eMail': '',
           'gender': 'Male',
           'diseases': ['None'],
-          'Other diseases': ' ',
+          'Other diseases': '',
           'age': '',
           'weight': '',
           'height': '',
@@ -76,16 +93,15 @@ class _registerState extends State<register> {
               ),
               FormBuilderTextField(
                   name: 'name',
-                  validator: (value) => value!.isEmpty
-                      ? 'Enter Your Name'
-                      : (nameRegExp.hasMatch(value)
-                          ? null
-                          : 'Enter a Valid Name'),
+                  validator: FormBuilderValidators.compose([
+                    FormBuilderValidators.required(errorText: 'Required Field'),
+                    FormBuilderValidators.match("^([a-zA-Z]{2,}\\s[a-zA-Z]{1,}'?-?[a-zA-Z]{2,}\\s?([a-zA-Z]{1,})?)",errorText: "Enter your First and Last name")
+                  ]),
                   controller: usernameController,
                   textAlign: TextAlign.left,
                   decoration: InputDecoration(
                     labelText: 'Name',
-                    icon: const Icon(Icons.account_circle_outlined),
+                    suffixIcon : const Icon(Icons.account_circle_outlined),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
@@ -96,22 +112,18 @@ class _registerState extends State<register> {
                 height: 15,
               ),
               FormBuilderTextField(
-                //autovalidateMode: AutovalidateMode.always,
                 name: 'number',
                  controller: phoneNumberController,
                 // ignore: prefer_const_constructors
                 decoration: InputDecoration(
                   labelText: 'Phone Number',
-                  icon: const Icon(Icons.phone),
+                  suffixIcon : const Icon(Icons.phone),
                 ),
-                onChanged: (val) {
-                  setState(() {});
-                },
                 // valueTransformer: (text) => num.tryParse(text),
                 validator: FormBuilderValidators.compose([
-                  FormBuilderValidators.numeric(),
+                  FormBuilderValidators.match("[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}\$", errorText: 'Enter a Valid Number'),
+                  FormBuilderValidators.required(errorText: 'Type in your Number')
                 ]),
-                // initialValue: '12',
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
               ),
@@ -120,16 +132,15 @@ class _registerState extends State<register> {
               ),
               FormBuilderTextField(
                 name: 'eMail',
-                validator: (value) => value!.isEmpty
-                    ? 'Enter Your E-Mail'
-                    : (emailRegExp.hasMatch(value)
-                        ? null
-                        : 'Enter a Valid E-Mail'),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(errorText: 'Required Field'),
+                  FormBuilderValidators.email(errorText: 'Enter a valid E-Mail')
+                ]),
                 controller: emailController,
                 textAlign: TextAlign.left,
                 decoration: InputDecoration(
                   labelText: 'E-mail',
-                  icon: const Icon(Icons.mail_outline_rounded),
+                  suffixIcon : const Icon(Icons.mail_outline_rounded),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
@@ -141,7 +152,6 @@ class _registerState extends State<register> {
                 height: 15,
               ),
               FormBuilderDropdown<String>(
-                // autovalidate: true,
                 name: 'gender',
                 decoration: const InputDecoration(
                   labelText: 'Gender',
@@ -156,34 +166,33 @@ class _registerState extends State<register> {
                           child: Text(gender),
                         ))
                     .toList(),
-
                 valueTransformer: (val) => val?.toString(),
               ),
               const SizedBox(
                 height: 15,
               ),
               FormBuilderCheckboxGroup<String>(
-                autovalidateMode: AutovalidateMode.onUserInteraction,
+                initialValue: ['None'],
+                valueTransformer: (val) => val?.toString(),
                 decoration: const InputDecoration(
                     labelText: 'Please check on diseases you have'),
                 name: 'diseases',
-                // initialValue: const ['Dart'],
                 options: const [
                   FormBuilderFieldOption(value: 'High blood pressure'),
                   FormBuilderFieldOption(value: 'High cholesterol'),
                   FormBuilderFieldOption(value: 'Low blood pressure'),
-                  FormBuilderFieldOption(value: 'Diabetes'),
-                  FormBuilderFieldOption(value: 'None'),
+                  FormBuilderFieldOption(value: 'Gestational Diabetes [Female]'),
+                  //FormBuilderFieldOption(value: 'None'),
                 ],
                 separator: const VerticalDivider(
                   width: 10,
                   thickness: 5,
-                  color: Colors.red,
                 ),
-                /*  validator: FormBuilderValidators.compose([
-                    FormBuilderValidators.minLength(0),
-                    FormBuilderValidators.maxLength(4),
-                  ]),*/
+                validator: (val) => /*val!.isEmpty? 'Required Field':*/
+                ((val!.contains('High blood pressure')&&val.contains('Low blood pressure'))
+                    ? 'You can\'t have High AND low blood pressure'
+                    : null),
+                // onChanged: //TODO if possible implement a none/clear option
               ),
               const SizedBox(
                 height: 15,
@@ -191,8 +200,7 @@ class _registerState extends State<register> {
               FormBuilderTextField(
                   name: 'Other diseases',
                   //validator:
-                  //initialValue: ' ',
-                  //controller: diseaseController,
+                  controller: otherDiseasesController,
                   textAlign: TextAlign.left,
                   decoration: InputDecoration(
                     labelText: 'Other diseases',
@@ -244,8 +252,8 @@ class _registerState extends State<register> {
                 height: 15,
               ),
               FormBuilderTextField(
-                //autovalidateMode: AutovalidateMode.always,
                 name: 'age',
+                controller: ageController,
                 // ignore: prefer_const_constructors
                 decoration: InputDecoration(
                   labelText: 'Age',
@@ -259,9 +267,9 @@ class _registerState extends State<register> {
                 // valueTransformer: (text) => num.tryParse(text),
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.numeric(),
+                  FormBuilderValidators.required(),
                   FormBuilderValidators.maxLength(2),
                 ]),
-                // initialValue: '12',
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
               ),
@@ -271,6 +279,7 @@ class _registerState extends State<register> {
               FormBuilderTextField(
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 name: 'weight',
+                controller: weightController,
                 // ignore: prefer_const_constructors
                 decoration: InputDecoration(
                   hintText: "Type in your weight in Kilograms",
@@ -286,9 +295,10 @@ class _registerState extends State<register> {
                 // valueTransformer: (text) => num.tryParse(text),
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.numeric(),
+                  FormBuilderValidators.required(),
+                  FormBuilderValidators.minLength(2),
                   FormBuilderValidators.maxLength(3),
                 ]),
-                // initialValue: '12',
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
               ),
@@ -296,9 +306,8 @@ class _registerState extends State<register> {
                 height: 15,
               ),
               FormBuilderTextField(
-                //autovalidateMode: AutovalidateMode.always,
                 name: 'height',
-                // ignore: prefer_const_constructors
+                controller: heightController,
                 decoration: InputDecoration(
                   hintText: "Type in your height in Centimeters",
                   labelText: 'Height',
@@ -313,9 +322,10 @@ class _registerState extends State<register> {
                 // valueTransformer: (text) => num.tryParse(text),
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.numeric(),
+                  FormBuilderValidators.required(),
+                  FormBuilderValidators.minLength(2),
                   FormBuilderValidators.maxLength(3),
                 ]),
-                // initialValue: '12',
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
               ),
@@ -350,13 +360,30 @@ class _registerState extends State<register> {
                   _buildPhoneNumberSubmittedBloc()
                 ],
               ),
+              const SizedBox(
+                height: 30,
+              ),
             ],
           ),
         ),
       )),
     );
   }
+
+  // IS THIS EVEN NEEDED ?????????
+  @override
+  void dispose() {
+    usernameController.dispose();
+     emailController.dispose();
+     phoneNumberController.dispose();
+     otherDiseasesController.dispose() ;
+     ageController.dispose() ;
+     weightController.dispose() ;
+    heightController.dispose();
+    super.dispose();
 }
+}
+
 
 
 Widget _logOutButton(BuildContext context){
@@ -377,10 +404,13 @@ Widget _logOutButton(BuildContext context){
 }
 
 
-Widget _resetFormButton(BuildContext context){
+Widget _resetFormButton(BuildContext context){ //TODO reset functionality not properly working
   return OutlinedButton(
     onPressed: () {
-      _regFormKey.currentState?.reset();
+      //maybe context maybe state is null somehow ? .. no idea for now
+      final formstate = FormBuilder.of(context);
+      formstate!.reset();
+      _regFormKey.currentState!.reset();
     },
     // color: Theme.of(context).colorScheme.secondary,
     child: Text(

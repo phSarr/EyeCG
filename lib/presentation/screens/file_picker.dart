@@ -1,7 +1,13 @@
+import 'package:eyecg/presentation/screens/TakePicturePage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:camera/camera.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+
+
 
 class FilePickerScreen extends StatefulWidget {
   @override
@@ -22,6 +28,19 @@ class _FilePickerScreenState extends State<FilePickerScreen> {
   final FileType _pickingType = FileType.any;
   final TextEditingController _controller = TextEditingController();
 
+   String _path = '';
+
+  void _showPhotoLibrary() async {
+    final file = await ImagePicker().pickImage(source: ImageSource.gallery);
+
+    setState(() {
+      _path = file!.path;
+    });
+
+  }
+
+
+
   void _pickFiles() async {
     _resetState();
     try {
@@ -29,7 +48,7 @@ class _FilePickerScreenState extends State<FilePickerScreen> {
       _paths = (await FilePicker.platform.pickFiles(
         type: _pickingType,
         allowMultiple: _multiPick,
-        onFileLoading: (FilePickerStatus status) => print(status),
+        onFileLoading: (FilePickerStatus status) => debugPrint(status as String?),
         allowedExtensions: (_extension?.isNotEmpty ?? false)
             ? _extension?.replaceAll(' ', '').split(',')
             : null,
@@ -49,45 +68,8 @@ class _FilePickerScreenState extends State<FilePickerScreen> {
     });
   }
 
-  void _clearCachedFiles() async {
-    _resetState();
-    try {
-      bool? result = await FilePicker.platform.clearTemporaryFiles();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: result! ? Colors.green : Colors.red,
-          content: Text((result
-              ? 'Temporary files removed with success.'
-              : 'Failed to clean temporary files')),
-        ),
-      );
-    } on PlatformException catch (e) {
-      _logException('Unsupported operation' + e.toString());
-    } catch (e) {
-      _logException(e.toString());
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
 
-  void _selectFolder() async {
-    _resetState();
-    try {
-      String? path = await FilePicker.platform.getDirectoryPath();
-      setState(() {
-        _directoryPath = path;
-        _userAborted = path == null;
-      });
-    } on PlatformException catch (e) {
-      _logException('Unsupported operation' + e.toString());
-    } catch (e) {
-      _logException(e.toString());
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  //TODO change to sendFile
+  //TODO change to sendFile, include _path as argument
   Future<void> _saveFile() async {
     _resetState();
     try {
@@ -118,6 +100,19 @@ class _FilePickerScreenState extends State<FilePickerScreen> {
         content: Text(message),
       ),
     );
+  }
+
+  void _showCamera() async {
+
+    final cameras = await availableCameras();
+    final camera = cameras.first;
+
+    // ignore: use_build_context_synchronously
+    final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => TakePicturePage(camera: camera)));
+    setState(() {
+      _path = result;
+    });
+
   }
 
   void _resetState() {
@@ -153,7 +148,9 @@ class _FilePickerScreenState extends State<FilePickerScreen> {
               children: <Widget>[
                 Padding(
                   padding: const EdgeInsets.only(top: 20.0),
-                  child: Image.asset('assets/images/retinal.png'),
+                  child: _path == '' ? Image.asset('assets/images/retinal.png') :
+                  Image.file(File(_path))
+                 // Image.asset('assets/images/retinal.png'),
                 ),
                 /*ConstrainedBox(
                   constraints: const BoxConstraints.tightFor(width: 200.0),
@@ -181,19 +178,21 @@ class _FilePickerScreenState extends State<FilePickerScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      //TODO add 'take picture' option.. same row with choose image button
                       Row(
                         children: <Widget>[
                           Expanded(
                             child:ElevatedButton(
-                              onPressed: () => _pickFiles(),
+                              onPressed: (){
+
+                                _showCamera();
+                              },
                               child: Text('Take image'),
                             ),
                           ),
                           const SizedBox(width: 20),
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: () => _pickFiles(),
+                              onPressed: () => _showPhotoLibrary(), //_pickFiles()
                               child: Text(_multiPick ? 'Pick images' : 'Pick an image'),
                             ),
                           ),
