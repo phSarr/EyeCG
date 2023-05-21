@@ -37,7 +37,6 @@ dependencies:
   flex_color_scheme: ^6.1.2
   shared_preferences: ^2.0.17
   scroll_app_bar: ^2.0.0
-  flutter_blue_plus: ^1.4.0
   json_annotation: ^4.8.0
   json_serializable: ^6.6.1
   get_it: ^7.2.0
@@ -59,6 +58,10 @@ dependencies:
   camera: ^0.10.5
   path_provider: ^2.0.14
   image_picker: ^0.8.7+4
+  flutter_bluetooth_serial: ^0.4.0
+  fl_chart: ^0.62.0
+  percent_indicator: ^4.2.3
+  multi_circular_slider: ^1.1.0
 
 
 

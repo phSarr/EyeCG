@@ -8,7 +8,6 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
 
-
 class FilePickerScreen extends StatefulWidget {
   @override
   _FilePickerScreenState createState() => _FilePickerScreenState();
@@ -38,7 +37,6 @@ class _FilePickerScreenState extends State<FilePickerScreen> {
     });
 
   }
-
 
 
   void _pickFiles() async {
