@@ -1,15 +1,20 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
 
+import 'dart:io';
+
 import 'package:eyecg/business_logic/phone_auth_cubit.dart';
 import 'package:eyecg/presentation/screens/file_picker.dart';
+import 'package:eyecg/presentation/widgets/bar_graph.dart';
 import 'package:eyecg/presentation/widgets/consts.dart';
+import 'package:firebase_ml_model_downloader/firebase_ml_model_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:open_settings/open_settings.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 //import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:scroll_app_bar/scroll_app_bar.dart';
-
+import 'package:eyecg/presentation/widgets/bp_bar_chart.dart';
+import 'package:tflite_flutter/tflite_flutter.dart';
 
 class dashboard extends StatefulWidget {
   const dashboard({Key? key}) : super(key: key);
@@ -19,9 +24,37 @@ class dashboard extends StatefulWidget {
 }
 
 final controller = ScrollController();
+List<double> averageBPM = [69.0,77.3,82.4,89.0,78.0,76.0,81.3];
+List<double> averageBPhigh = [127.0,120.3,115.4,118.0,122.0,116.0,117.3];
+List<double> averageBPlow = [81.0,78.3,77.4,82.0,78.0,76.0,81.3];
+List<double> averageSPO2 = [96.0,94.3,98.4,97.0,99.0,98.0,97.3];
+
+
 
 class _dashboardState extends State<dashboard> {
   PhoneAuthCubit phoneAuthCubit = PhoneAuthCubit();
+
+ _loadModel(){
+
+  FirebaseModelDownloader firebaseModelDownloader = FirebaseModelDownloader.instance;
+  firebaseModelDownloader.getModel("eyecg_demographs",
+      FirebaseModelDownloadType.localModelUpdateInBackground,
+      FirebaseModelDownloadConditions(
+        iosAllowsCellularAccess: true,
+        iosAllowsBackgroundDownloading: true,
+        androidChargingRequired: false,
+        androidWifiRequired: true,
+        androidDeviceIdleRequired: false,
+      )).then((customModel) async {
+    final localModelPath = customModel.file;
+    print(localModelPath);
+    Interpreter interpreter = Interpreter.fromFile(localModelPath);
+    interpreter.allocateTensors();
+    //interpreter.run(input, out);
+    //print('The output from the model is: $out');
+  });
+}
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
@@ -143,6 +176,7 @@ Widget _not_Connected(BuildContext context) {
 }
 
 Widget _visuals(BuildContext context) {
+
   return SingleChildScrollView(
     child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
@@ -223,7 +257,7 @@ Widget _visuals(BuildContext context) {
               //backgroundColor: Colors.grey,
               progressColor: Colors.green,
             ),
-            SizedBox(width: 50),
+            SizedBox(width: 30),
             CircularPercentIndicator(
               reverse: true,
               animation: true,
@@ -251,9 +285,55 @@ Widget _visuals(BuildContext context) {
           ],
         ),
           SizedBox(height: 30),
-
+          Text("Heart BPM over the week", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),),
+          SizedBox(height: 10),
+          SizedBox(
+            height: 300,
+            child: BarGraph(weeklySummary: averageBPM),
+          ),
+          SizedBox(height: 30),
+          Text("Blood pressure over the week", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),),
+          SizedBox(height: 10),
+          SizedBox(
+              height: 300,
+              child: BarChartBp(weeklySummaryH: averageBPhigh, weeklySummaryL: averageBPlow)
+          ),
+          SizedBox(height: 30),
+          Text("Blood Oxygen Saturation over the week", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),),
+          SizedBox(height: 10),
+          SizedBox(
+            height: 300,
+            child: BarGraph(weeklySummary: averageSPO2),
+          ),
+          SizedBox(height: 30),
+          ElevatedButton(
+              onPressed: ()async{
+                var out = List.filled(1*1, 0.0).reshape([1,1]);
+                var input = [[0.0,48.0,0.0,72.0,1.0,1.0,1.0,97.5,77.0,157.0]];
+                FirebaseModelDownloader firebaseModelDownloader = FirebaseModelDownloader.instance;
+                 firebaseModelDownloader.getModel("eyecg_demographs",
+                    FirebaseModelDownloadType.localModelUpdateInBackground,
+                    FirebaseModelDownloadConditions(
+                      iosAllowsCellularAccess: true,
+                      iosAllowsBackgroundDownloading: true,
+                      androidChargingRequired: false,
+                      androidWifiRequired: true,
+                      androidDeviceIdleRequired: false,
+                    )).then((customModel) async {
+                   final localModelPath = customModel.file;
+                   Interpreter interpreter = Interpreter.fromFile(localModelPath);
+                   interpreter.allocateTensors();
+                   interpreter.run(input, out);
+                   print('The output from the model is: ${out[0][0]/7.55}');
+                   //File(localModelPath.path).delete();
+                   interpreter.close();
+                 });
+              }, // sex age diabetes hr heart prob glucose smoke o2 bpl bph
+              child: Text('Share Medical Data')),
+          SizedBox(height: 30),
         ],
       ),
     ),
   );
 }
+

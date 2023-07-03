@@ -2,6 +2,7 @@ import 'package:eyecg/presentation/widgets/app_router.dart';
 import 'package:eyecg/presentation/widgets/consts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_ml_model_downloader/firebase_ml_model_downloader.dart';
 import 'package:flutter/material.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -13,11 +14,25 @@ void main() async {
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   WidgetsFlutterBinding.ensureInitialized();
 
-/*
+  await Firebase.initializeApp();
+  //var conditions = CustomModelDownloadConditions.Builder().requireWifi().build();
+  FirebaseModelDownloader firebaseModelDownloader = FirebaseModelDownloader.instance;
 
+/*
+    await firebaseModelDownloader.getModel("eyecg_demographs",
+        FirebaseModelDownloadType.localModelUpdateInBackground,
+        FirebaseModelDownloadConditions(
+          iosAllowsCellularAccess: true,
+          iosAllowsBackgroundDownloading: true,
+          androidChargingRequired: false,
+          androidWifiRequired: true,
+          androidDeviceIdleRequired: false,
+        )).then((customModel) {
+
+      final localModelPath = customModel.file;
+    });
 */
 
-  await Firebase.initializeApp();
   //initGetIt();
   FirebaseAuth.instance.authStateChanges().listen((user) {
     if (user == null) {

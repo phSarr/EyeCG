@@ -189,15 +189,13 @@ class _registerState extends State<register> {
               FormBuilderCheckboxGroup<String>(
                 initialValue: ['None'],
                 valueTransformer: (val) => val?.toString(),
-                decoration: const InputDecoration(
-                    labelText: 'Please check on diseases you have'),
+                decoration: const InputDecoration(labelText: 'Please check on diseases you have'),
                 name: 'diseases',
                 options: const [
                   FormBuilderFieldOption(value: 'High blood pressure'),
                   FormBuilderFieldOption(value: 'High cholesterol'),
                   FormBuilderFieldOption(value: 'Low blood pressure'),
-                  FormBuilderFieldOption(
-                      value: 'Gestational Diabetes [Female]'),
+                  FormBuilderFieldOption(value: 'Heart problems diagnosed by doctor'),
                   //FormBuilderFieldOption(value: 'None'),
                 ],
                 separator: const VerticalDivider(

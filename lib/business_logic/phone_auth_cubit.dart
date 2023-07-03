@@ -28,7 +28,7 @@ class PhoneAuthCubit extends Cubit<PhoneAuthState> {
     print('verificationFailed $exception.toString()');
     emit(ErrorOccurred(exception.toString()));
   }
-  void codeSent(String verificationID, int? resendToken){ //TODO Implement resend code functionality from firebase docs
+  void codeSent(String verificationID, int? resendToken){ //TODO Implement resend code functionality
     print('codeSent');
     this.verificationID=verificationID;
     emit(PhoneNumberSubmitted());
@@ -56,3 +56,4 @@ class PhoneAuthCubit extends Cubit<PhoneAuthState> {
     return firebaseUser;
   }
 }
+
